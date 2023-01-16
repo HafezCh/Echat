@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Echat.Web", "Echat.Web\Echat.Web.csproj", "{FB0F2FEE-826D-431C-8F71-9D0E0942FF1C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreLayer", "CoreLayer\CoreLayer.csproj", "{AFD96E22-70DD-498D-838E-36A60CD3692D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataLayer", "DataLayer\DataLayer.csproj", "{BDC11A6D-4044-4323-B412-186C4748A200}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FB0F2FEE-826D-431C-8F71-9D0E0942FF1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB0F2FEE-826D-431C-8F71-9D0E0942FF1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB0F2FEE-826D-431C-8F71-9D0E0942FF1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB0F2FEE-826D-431C-8F71-9D0E0942FF1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFD96E22-70DD-498D-838E-36A60CD3692D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFD96E22-70DD-498D-838E-36A60CD3692D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFD96E22-70DD-498D-838E-36A60CD3692D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFD96E22-70DD-498D-838E-36A60CD3692D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDC11A6D-4044-4323-B412-186C4748A200}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDC11A6D-4044-4323-B412-186C4748A200}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDC11A6D-4044-4323-B412-186C4748A200}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDC11A6D-4044-4323-B412-186C4748A200}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {304FC986-27A2-4357-ADFD-DD96F00B906E}
+	EndGlobalSection
+EndGlobal
