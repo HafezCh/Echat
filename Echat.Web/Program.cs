@@ -1,7 +1,23 @@
+using CoreLayer.Services.Chats;
+using CoreLayer.Services.Roles;
+using CoreLayer.Services.Users;
+using DataLayer.Context;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+var services = builder.Services;
+
+var connectionString = builder.Configuration.GetConnectionString("EChat");
+
+services.AddDbContext<EChatApplicationContext>(x => x.UseSqlServer(connectionString));
+
+services.AddScoped<IChatService, ChatService>();
+services.AddScoped<IRoleService, RoleService>();
+services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
