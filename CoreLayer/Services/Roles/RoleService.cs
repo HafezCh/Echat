@@ -1,10 +1,11 @@
 ﻿using DataLayer.Context;
 
-namespace CoreLayer.Services.Roles;
-
-public class RoleService : BaseService, IRoleService
+namespace CoreLayer.Services.Roles
 {
-    public RoleService(EChatApplicationContext context) : base(context)
+    public class RoleService : BaseService, IRoleService
     {
+        public RoleService(EChatApplicationContext context) : base(context)
+        {
+        }
     }
 }

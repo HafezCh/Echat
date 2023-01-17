@@ -1,8 +1,10 @@
-﻿using DataLayer.Entities.Chats;
+﻿using System.Threading.Tasks;
+using DataLayer.Entities.Chats;
 
-namespace CoreLayer.Services.Chats;
-
-public interface IChatService
+namespace CoreLayer.Services.Chats
 {
-    Task SendMessage(Chat chat);
+    public interface IChatService
+    {
+        Task SendMessage(Chat chat);
+    }
 }

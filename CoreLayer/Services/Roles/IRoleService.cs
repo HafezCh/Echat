@@ -1,6 +1,7 @@
-﻿namespace CoreLayer.Services.Roles;
-
-public interface IRoleService
+﻿namespace CoreLayer.Services.Roles
 {
-
+    public interface IRoleService
+    {
+        
+    }
 }

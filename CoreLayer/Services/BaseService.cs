@@ -5,163 +5,164 @@ using System.Collections.Concurrent;
 using System.Data;
 using System.Data.Common;
 
-namespace CoreLayer.Services;
-
-public abstract class BaseService
+namespace CoreLayer.Services
 {
-    private readonly ConcurrentDictionary<string, object> _entitySets = new();
-
-    protected EChatApplicationContext _context { get; private set; }
-
-    protected BaseService(EChatApplicationContext context)
+    public abstract class BaseService
     {
-        _context = context;
-    }
+        private readonly ConcurrentDictionary<string, object> _entitySets = new();
 
-    #region Methods
+        protected EChatApplicationContext _context { get; private set; }
 
-    protected virtual void Insert<T>(T entity) where T : BaseEntity
-    {
-        if (entity == null)
+        protected BaseService(EChatApplicationContext context)
         {
-            throw new ArgumentNullException(nameof(entity));
+            _context = context;
         }
 
-        Entities<T>().Add(entity);
-    }
 
-    protected virtual void Insert<T>(IEnumerable<T> entities) where T : BaseEntity
-    {
-        if (entities?.Any() != true)
+        #region Methods
+        protected virtual void Insert<T>(T entity) where T : BaseEntity
         {
-            throw new ArgumentException(nameof(entities));
-        }
-
-        Entities<T>().AddRange(entities);
-    }
-
-    protected virtual void Update<T>(T entity)
-        where T : BaseEntity
-    {
-        if (entity == null)
-        {
-            throw new ArgumentNullException(nameof(entity));
-        }
-
-        var entry = _context.Entry(entity);
-        if (entry == null)
-        {
-            var cachedEntry = _context.ChangeTracker.Entries<T>().FirstOrDefault(x => x.Entity.Id == entity.Id);
-            if (cachedEntry != null)
+            if (entity == null)
             {
-                cachedEntry.State = EntityState.Detached;
+                throw new ArgumentNullException(nameof(entity));
             }
 
-            Entities<T>().Attach(entity);
-            entry = _context.Entry(entity);
+            Entities<T>().Add(entity);
         }
 
-        entry.State = EntityState.Modified;
-    }
-
-
-    protected virtual void Update<T>(IEnumerable<T> entities)
-        where T : BaseEntity
-    {
-        if (entities?.Any() != true)
+        protected virtual void Insert<T>(IEnumerable<T> entities) where T : BaseEntity
         {
-            throw new ArgumentException(nameof(entities));
+            if (entities?.Any() != true)
+            {
+                throw new ArgumentException(nameof(entities));
+            }
+
+            Entities<T>().AddRange(entities);
         }
 
-        Entities<T>().AttachRange(entities);
-        foreach (var entity in entities)
+        protected virtual void Update<T>(T entity)
+            where T : BaseEntity
         {
-            _context.Entry(entity).State = EntityState.Modified;
-        }
-    }
+            if (entity == null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
 
-    protected virtual void Delete<T>(T entity)
-        where T : BaseEntity
-    {
-        if (entity == null)
+            var entry = _context.Entry(entity);
+            if (entry == null)
+            {
+                var cachedEntry = _context.ChangeTracker.Entries<T>().FirstOrDefault(x => x.Entity.Id == entity.Id);
+                if (cachedEntry != null)
+                {
+                    cachedEntry.State = EntityState.Detached;
+                }
+
+                Entities<T>().Attach(entity);
+                entry = _context.Entry(entity);
+            }
+
+            entry.State = EntityState.Modified;
+        }
+
+
+        protected virtual void Update<T>(IEnumerable<T> entities)
+            where T : BaseEntity
         {
-            throw new ArgumentNullException(nameof(entity));
+            if (entities?.Any() != true)
+            {
+                throw new ArgumentException(nameof(entities));
+            }
+
+            Entities<T>().AttachRange(entities);
+            foreach (var entity in entities)
+            {
+                _context.Entry(entity).State = EntityState.Modified;
+            }
         }
 
-        Entities<T>().Remove(entity);
-    }
-
-
-    protected List<T> RawSqlQuery<T>(string query, Func<DbDataReader, T> map)
-    {
-        using var command = _context.Database.GetDbConnection().CreateCommand();
-        command.CommandText = query;
-        command.CommandType = CommandType.Text;
-
-        _context.Database.OpenConnection();
-
-        using var result = command.ExecuteReader();
-        var entities = new List<T>();
-
-        while (result.Read())
+        protected virtual void Delete<T>(T entity)
+            where T : BaseEntity
         {
-            entities.Add(map(result));
+            if (entity == null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+
+            Entities<T>().Remove(entity);
         }
 
-        return entities;
-    }
-    protected virtual void Delete<T>(IEnumerable<T> entities)
-        where T : BaseEntity
-    {
-        if (entities?.Any() != true)
+
+        protected List<T> RawSqlQuery<T>(string query, Func<DbDataReader, T> map)
         {
-            throw new ArgumentException(nameof(entities));
+            using var command = _context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = query;
+            command.CommandType = CommandType.Text;
+
+            _context.Database.OpenConnection();
+
+            using var result = command.ExecuteReader();
+            var entities = new List<T>();
+
+            while (result.Read())
+            {
+                entities.Add(map(result));
+            }
+
+            return entities;
         }
-
-        Entities<T>().RemoveRange(entities);
-    }
-
-
-    protected Task<int> Save()
-    {
-        var result = _context.SaveChangesAsync();
-
-        return result;
-    }
-
-    protected virtual IQueryable<T> Table<T>() where T : BaseEntity
-    {
-        return Entities<T>().AsNoTracking();
-    }
-
-    protected virtual IQueryable<T> TableTracking<T>()
-        where T : BaseEntity
-    {
-        return Entities<T>();
-    }
-
-    protected virtual DbSet<T> Entities<T>()
-        where T : BaseEntity
-    {
-        return _entitySets.GetOrAdd(typeof(T).FullName, (key) => { return _context.Set<T>(); }) as DbSet<T>;
-    }
-
-
-    protected virtual Task<T> GetById<T>(int entityId) where T : BaseEntity
-    {
-        return Table<T>().SingleOrDefaultAsync(x => x.Id == entityId);
-    }
-
-    protected virtual Task<T> GetById<T>(int entityId, params string[] includs) where T : BaseEntity
-    {
-        IQueryable<T> table = _context.Set<T>();
-        foreach (var inc in includs)
+        protected virtual void Delete<T>(IEnumerable<T> entities)
+            where T : BaseEntity
         {
-            table = table.Include(inc);
+            if (entities?.Any() != true)
+            {
+                throw new ArgumentException(nameof(entities));
+            }
+
+            Entities<T>().RemoveRange(entities);
         }
 
-        return table.SingleOrDefaultAsync(x => x.Id == entityId);
-    }
 
-    #endregion
+        protected Task<int> Save()
+        {
+            var result = _context.SaveChangesAsync();
+
+            return result;
+        }
+
+        protected virtual IQueryable<T> Table<T>() where T : BaseEntity
+        {
+            return Entities<T>().AsNoTracking();
+        }
+
+        protected virtual IQueryable<T> TableTracking<T>()
+            where T : BaseEntity
+        {
+            return Entities<T>();
+        }
+
+        protected virtual DbSet<T> Entities<T>()
+            where T : BaseEntity
+        {
+            return _entitySets.GetOrAdd(typeof(T).FullName, (key) => { return _context.Set<T>(); }) as DbSet<T>;
+        }
+
+
+        protected virtual Task<T> GetById<T>(int entityId) where T : BaseEntity
+        {
+            return Table<T>().SingleOrDefaultAsync(x => x.Id == entityId);
+        }
+
+        protected virtual Task<T> GetById<T>(int entityId, params string[] includs) where T : BaseEntity
+        {
+            IQueryable<T> table = _context.Set<T>();
+            foreach (var inc in includs)
+            {
+                table = table.Include(inc);
+            }
+
+            return table.SingleOrDefaultAsync(x => x.Id == entityId);
+        }
+
+        #endregion
+    }
 }
