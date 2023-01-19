@@ -26,13 +26,13 @@ namespace Echat.Web.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return RedirectToAction("Index");
+                return View("Index", model);
             }
             var result = await _userService.RegisterUser(model);
             if (!result)
             {
                 ModelState.AddModelError(model.UserName, "نام کاربری تکراری است");
-                return RedirectToAction("Index");
+                return View("Index", model);
             }
             return Redirect("/auth#login");
         }
@@ -41,7 +41,7 @@ namespace Echat.Web.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return RedirectToAction("Index");
+                return View("Index", model);
             }
 
             var user = await _userService.LoginUser(model);
@@ -49,7 +49,7 @@ namespace Echat.Web.Controllers
             if (user == null)
             {
                 ModelState.AddModelError("UserName", "کاربری با مشخصات وارد شده یافت نشد");
-                return RedirectToAction("Index");
+                return View("Index", model);
             }
 
             var claims = new List<Claim>

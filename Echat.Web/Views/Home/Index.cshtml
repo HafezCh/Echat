@@ -135,3 +135,16 @@
         </Ul>
     </div>
 </div>
+
+            @section Scripts
+            {
+                <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+                <script>
+                    var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").build();
+                    connection.on("Welcome",
+                        (text) => {
+                            alert(text);
+                        });
+                    connection.start();
+                </script>
+            }

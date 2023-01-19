@@ -4,9 +4,9 @@
     <h1 class="text-center">ورود به حساب</h1>
     <div class="text-danger" asp-validation-summary="All"></div>
     <label>نام کاربری : </label>
-    <input type="text" asp-for="UserName" class="form-control" />
+    <input type="text" asp-for="UserName" id="loginUserName" class="form-control" />
     <label>کلمه عبور : </label>
-    <input type="password" asp-for="Password" class="form-control" />
+    <input type="password" asp-for="Password" id="loginPassword" class="form-control" />
     <button type="submit" class="btn btn-success mt-4 float-end" style="margin-right: 8px;">ورود به حساب</button>
-    <button type="button" id="register-btn" class="btn btn-primary mt-4">ثبت نام</button>
+    <a href="#register" id="register-btn" class="btn btn-primary mt-4">ثبت نام</a>
 </form>

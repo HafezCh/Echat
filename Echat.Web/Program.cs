@@ -2,6 +2,7 @@ using CoreLayer.Services.Chats;
 using CoreLayer.Services.Roles;
 using CoreLayer.Services.Users;
 using DataLayer.Context;
+using Echat.Web.Hubs;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,8 @@ services.AddDbContext<EChatApplicationContext>(x => x.UseSqlServer(connectionStr
 services.AddScoped<IChatService, ChatService>();
 services.AddScoped<IRoleService, RoleService>();
 services.AddScoped<IUserService, UserService>();
+
+services.AddSignalR();
 
 services.AddAuthentication(option =>
 {
@@ -54,5 +57,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<ChatHub>("/Chat");
 
 app.Run();
