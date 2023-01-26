@@ -51,5 +51,10 @@ namespace Echat.Web.Controllers
                 await _hubContext.Clients.User(model.UserId.ToString()).SendAsync("NewGroup", "Error");
             }
         }
+
+        public async Task<IActionResult> Search(string title)
+        {
+            return new ObjectResult(await _chatGroupService.Search(title));
+        }
     }
 }

@@ -3,6 +3,7 @@ using CoreLayer.Utilities;
 using CoreLayer.ViewModels.Chats;
 using DataLayer.Context;
 using DataLayer.Entities.Chats;
+using DataLayer.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
@@ -47,5 +48,38 @@ public class ChatGroupService : BaseService, IChatGroupService
         await _userGroupService.JoinGroup(model.UserId, chatGroup.Id);
 
         return chatGroup;
+    }
+
+    public async Task<List<SearchResultViewModel>> Search(string title)
+    {
+        var result = new List<SearchResultViewModel>();
+
+        if (string.IsNullOrWhiteSpace(title))
+            return result;
+
+        var groups = await Table<ChatGroup>()
+            .Where(x => x.GroupTitle.Contains(title))
+            .Select(x => new SearchResultViewModel
+            {
+                ImageName = x.ImageName,
+                Token = x.GroupToken,
+                Title = x.GroupTitle,
+                IsUser = false
+            }).ToListAsync();
+
+        var users = await Table<User>()
+            .Where(x => x.UserName.Contains(title))
+            .Select(x => new SearchResultViewModel
+            {
+                ImageName = x.AvatarName,
+                Token = x.Id.ToString(),
+                Title = x.UserName,
+                IsUser = true
+            }).ToListAsync();
+
+        result.AddRange(groups);
+        result.AddRange(users);
+
+        return result;
     }
 }

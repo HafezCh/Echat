@@ -67,30 +67,39 @@
         <Ul>
             <li>
                 <form>
-                    <input type="text" placeholder="جستوجو کنید" class="form-control" />
+                    <input type="text" onkeyup="search()" placeholder="جستوجو کنید" id="search_input" class="form-control" />
                     <i class="fa fas fa-search"></i>
                 </form>
             </li>
-            <li>
-                <a data-toggle="modal" data-target="#exampleModal" class="btn btn-success d-block">
-                    <i class="fa fa-plus"></i>
-                    ایجاد گروه جدید
-                </a>
-            </li>
-            @foreach (var item in Model)
-            {
-                var lastChat = item.LastChat;
+            <li id="search_result" style="cursor: none; padding: 0;display: none">
+                <ul>
+                </ul>
 
-                <li data-id="@item.Token">
-                    @item.GroupName
-                    <img src="/images/Groups/@item.ImageName" />
-                    @if (lastChat != null)
+            </li>
+            <li id="user_groups" style="cursor: none;padding: 0">
+                <ul>
+                    <li>
+                        <button data-toggle="modal" data-target="#exampleModal" class="btn btn-success btn-block" style="width: 100%">
+                            <i class="fa fa-plus"></i>
+                            ایجاد گروه جدید
+                        </button>
+                    </li>
+                    @foreach (var item in Model)
                     {
-                        var time = lastChat.CreationDate;
-                        <span>@time.Date @time.Minute : @time.Second</span>
+                        <li data-id="@item.Token">
+                            @item.GroupName
+                            <img src="/images/groups/@item.ImageName" />
+                            @if (item.LastChat != null)
+                            {
+                                var time = item.LastChat.CreationDate;
+                                <span>@time.Date @time.Minute : @time.Second</span>
+                            }
+                        </li>
                     }
-                </li>
-            }
+                </ul>
+            </li>
+
+
         </Ul>
     </div>
 </div>
@@ -119,7 +128,7 @@
             if (groupName == "Error") {
                 alert("ERROR");
             } else {
-                $(".rooms ul").append(`
+                $(".rooms #user-groups ul").append(`
                      <li data-id='${token}'>
                     ${groupName}
                     <img src="/images/groups/${imageName}" />
@@ -146,6 +155,44 @@
                 processData: false,
                 contentType: false
             });
+        }
+
+        function search() {
+            const text = $("#search_input").val();
+            if (text) {
+                $("#search_result").show();
+                $("#user_groups").hide();
+                $.ajax({
+                    url: "/home/search?title=" + text,
+                    type: "get"
+                }).done(function (data) {
+                    $("#search_result ul").html("");
+                    for (var i in data) {
+                        if (data[i].isUser) {
+                            $("#search_result ul").append(`
+                                         <li data-user-id='${data[i].token}'>
+                                                    ${data[i].title}
+                                                    <img src="/img/${data[i].imageName}" />
+                                                    <span></span>
+                                                </li>
+                                `);
+                        } else {
+                            $("#search_result ul").append(`
+                                         <li data-id='${data[i].token}'>
+                                                    ${data[i].title}
+                                                    <img src="/images/groups/${data[i].imageName}" />
+                                                    <span></span>
+                                                </li>
+
+                                `);
+                        }
+                    }
+
+                });
+            } else {
+                $("#search_result").hide();
+                $("#user_groups").show();
+            }
         }
     </script>
 }
