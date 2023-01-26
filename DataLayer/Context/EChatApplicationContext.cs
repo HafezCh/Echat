@@ -28,6 +28,12 @@ public class EChatApplicationContext : DbContext
             .HasForeignKey(b => b.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<UserGroup>()
+            .HasOne(b => b.User)
+            .WithMany(b => b.UserGroups)
+            .HasForeignKey(b => b.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         base.OnModelCreating(modelBuilder);
     }
 
@@ -37,4 +43,5 @@ public class EChatApplicationContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
+    public DbSet<UserGroup> UserGroups { get; set; }
 }

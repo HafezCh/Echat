@@ -1,6 +1,8 @@
 using CoreLayer.Services.Chats;
+using CoreLayer.Services.Chats.ChatGroups;
 using CoreLayer.Services.Roles;
 using CoreLayer.Services.Users;
+using CoreLayer.Services.Users.UserGroups;
 using DataLayer.Context;
 using Echat.Web.Hubs;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -20,6 +22,8 @@ services.AddDbContext<EChatApplicationContext>(x => x.UseSqlServer(connectionStr
 services.AddScoped<IChatService, ChatService>();
 services.AddScoped<IRoleService, RoleService>();
 services.AddScoped<IUserService, UserService>();
+services.AddScoped<IChatGroupService, ChatGroupService>();
+services.AddScoped<IUserGroupService, UserGroupService>();
 
 services.AddSignalR();
 

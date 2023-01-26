@@ -20,6 +20,7 @@ public class User : BaseEntity
     public ICollection<ChatGroup> ChatGroups { get; set; }
     public ICollection<Chat> Chats { get; set; }
     public ICollection<UserRole> UserRoles { get; set; }
+    public ICollection<UserGroup> UserGroups { get; set; }
 
     #endregion
 }

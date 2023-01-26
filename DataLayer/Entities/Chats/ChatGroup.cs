@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DataLayer.Entities.Users;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using DataLayer.Entities.Users;
 
 namespace DataLayer.Entities.Chats;
 
@@ -10,7 +10,8 @@ public class ChatGroup : BaseEntity
     public string GroupTitle { get; set; }
     [MaxLength(110)]
     public string GroupToken { get; set; }
-
+    [MaxLength(110)]
+    public string ImageName { get; set; }
     public long OwnerId { get; set; }
 
     #region Relations
@@ -18,6 +19,7 @@ public class ChatGroup : BaseEntity
     [ForeignKey(nameof(OwnerId))]
     public User User { get; set; }
     public ICollection<Chat> Chats { get; set; }
+    public ICollection<UserGroup> UserGroups { get; set; }
 
     #endregion
 }

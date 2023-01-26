@@ -1,34 +1,55 @@
-﻿using Echat.Web.Models;
+﻿using CoreLayer.Services.Chats.ChatGroups;
+using CoreLayer.Services.Users.UserGroups;
+using CoreLayer.Utilities;
+using CoreLayer.ViewModels.Chats;
+using Echat.Web.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Echat.Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly IHubContext<ChatHub> _hubContext;
+        private readonly IChatGroupService _chatGroupService;
+        private readonly IUserGroupService _userGroupService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IChatGroupService chatGroupService, IHubContext<ChatHub> hubContext, IUserGroupService userGroupService)
         {
-            _logger = logger;
+            _chatGroupService = chatGroupService;
+            _hubContext = hubContext;
+            _userGroupService = userGroupService;
         }
 
         [Authorize]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var model = await _userGroupService.GetUserGroups(User.GetUserId());
+
+            return View(model);
         }
 
-        public IActionResult Privacy()
+        [Authorize]
+        [HttpPost]
+        public async Task CreateGroup([FromForm] CreateGroupViewModel? model)
         {
-            return View();
-        }
+            if (model == null)
+            {
+                await _hubContext.Clients.User(User.GetUserId().ToString()).SendAsync("NewGroup", "Error");
+            }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            model.UserId = User.GetUserId();
+
+            try
+            {
+                var result = await _chatGroupService.InsertGroup(model);
+                await _hubContext.Clients.User(model.UserId.ToString()).SendAsync("NewGroup", result.GroupTitle, result.GroupToken, result.ImageName);
+            }
+            catch
+            {
+                await _hubContext.Clients.User(model.UserId.ToString()).SendAsync("NewGroup", "Error");
+            }
         }
     }
 }

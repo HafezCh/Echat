@@ -1,6 +1,25 @@
-﻿@{
+﻿@model List<CoreLayer.ViewModels.Chats.UserGroupViewModel>
+@{
     ViewData["Title"] = "Home Page";
 }
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form class="modal-content" enctype="multipart/form-data" onsubmit="insertGroup(event)">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">ایجاد گروه</h5>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="groupName" class="form-control" placeholder="نام گروه را وارد کنید" />
+                <input type="file" accept="image/*" name="image" class="form-control mt-2" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">بستن</button>
+                <button type="submit" class="btn btn-success">ایجاد گروه</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <div class="row">
     <div class="col-8 chat-content">
@@ -35,8 +54,8 @@
             </div>
         </div>
         <div class="footer">
-            <form>
-                <input type="text" class="form-control" placeholder="متن خود را وارد کنید">
+            <form onsubmit="SendMessage(event)">
+                <input type="text" id="messageText" class="form-control" placeholder="متن خود را وارد کنید">
                 <button class="btn btn-success">
                     ارسال
                     <i class="fa fa-send"></i>
@@ -53,98 +72,80 @@
                 </form>
             </li>
             <li>
-                Global
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
+                <a data-toggle="modal" data-target="#exampleModal" class="btn btn-success d-block">
+                    <i class="fa fa-plus"></i>
+                    ایجاد گروه جدید
+                </a>
             </li>
-            <li class="active">
-                علی
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
+            @foreach (var item in Model)
+            {
+                var lastChat = item.LastChat;
 
-            </li>
-            <li>
-                رضا
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
-            <li>
-                Global
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
-            <li>
-                علی
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-
-            </li>
-            <li>
-                رضا
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
-            <li>
-                Global
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
-            <li>
-                علی
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-
-            </li>
-            <li>
-                رضا
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
-            <li>
-                Global
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
-            <li>
-                علی
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-
-            </li>
-            <li>
-                رضا
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
-            <li>
-                Global
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
-            <li>
-                علی
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-
-            </li>
-            <li>
-                رضا
-                <img src="img/Default.jpg" />
-                <span>17:20 1400/01/15 </span>
-            </li>
+                <li data-id="@item.Token">
+                    @item.GroupName
+                    <img src="/images/Groups/@item.ImageName" />
+                    @if (lastChat != null)
+                    {
+                        var time = lastChat.CreationDate;
+                        <span>@time.Date @time.Minute : @time.Second</span>
+                    }
+                </li>
+            }
         </Ul>
     </div>
 </div>
 
-            @section Scripts
-            {
-                <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
-                <script>
-                    var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").build();
-                    connection.on("Welcome",
-                        (text) => {
-                            alert(text);
-                        });
-                    connection.start();
-                </script>
+@section Scripts
+{
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+        var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").build();
+        connection.on("ReceiveMessage", Receive);
+        connection.on("NewGroup", AppendGroup);
+        connection.start();
+
+        function Receive(text) {
+            console.log(text);
+        }
+
+        // invoke = فراخوانی کردن
+        function SendMessage(event) {
+            event.preventDefault();
+            const text = document.getElementById("messageText").value;
+            connection.invoke("SendMessage", text);
+        }
+
+        function AppendGroup(groupName, token, imageName) {
+            if (groupName == "Error") {
+                alert("ERROR");
+            } else {
+                $(".rooms ul").append(`
+                     <li data-id='${token}'>
+                    ${groupName}
+                    <img src="/images/groups/${imageName}" />
+                    <span></span>
+                </li>
+                    `);
+                $("#exampleModal").modal('toggle');
+                document.getElementById("groupName").value = null;
             }
+        }
+
+        function insertGroup(event) {
+            event.preventDefault();
+            const groupName = event.target[0].value;
+            const imageFile = event.target[1].files[0];
+            var formData = new FormData();
+            formData.append("GroupName", groupName);
+            formData.append("ImageFile", imageFile);
+            $.ajax({
+                url: "/Home/CreateGroup",
+                type: "post",
+                data: formData,
+                encyType: "multipart/form-data",
+                processData: false,
+                contentType: false
+            });
+        }
+    </script>
+}
