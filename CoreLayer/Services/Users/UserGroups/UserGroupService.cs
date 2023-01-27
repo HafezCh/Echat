@@ -37,4 +37,16 @@ public class UserGroupService : BaseService, IUserGroupService
         });
         await Save();
     }
+
+    public async Task<bool> IsUserInGroup(long userId, long groupId)
+    {
+        return await Table<UserGroup>().AnyAsync(x => x.UserId == userId && x.GroupId == groupId);
+    }
+
+    public async Task<bool> IsUserInGroup(long userId, string groupToken)
+    {
+        return await Table<UserGroup>()
+            .Include(x => x.ChatGroup)
+            .AnyAsync(x => x.UserId == userId && x.ChatGroup.GroupToken == groupToken);
+    }
 }

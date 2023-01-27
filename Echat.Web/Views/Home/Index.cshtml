@@ -23,11 +23,11 @@
 
 <div class="row">
     <div class="col-8 chat-content">
-        <div class="header">
+        <div class="header"  style="display: none">
             <img src="img/Default.jpg" />
             <h2>علی</h2>
         </div>
-        <div class="chats">
+        @*<div class="chats">
             <div class="chat-me">
                 <div class="chat">
                     <p>سلام خوبی چه خبر ؟ </p>
@@ -52,8 +52,8 @@
                     <span>2020/06/05</span>
                 </div>
             </div>
-        </div>
-        <div class="footer">
+        </div>*@
+        <div class="footer" style="display: none">
             <form onsubmit="SendMessage(event)">
                 <input type="text" id="messageText" class="form-control" placeholder="متن خود را وارد کنید">
                 <button class="btn btn-success">
@@ -67,7 +67,7 @@
         <Ul>
             <li>
                 <form>
-                    <input type="text" onkeyup="search()" placeholder="جستوجو کنید" id="search_input" class="form-control" />
+                    <input type="text" onkeyup="search()" placeholder="جستجو کنید" id="search_input" class="form-control" />
                     <i class="fa fas fa-search"></i>
                 </form>
             </li>
@@ -86,7 +86,7 @@
                     </li>
                     @foreach (var item in Model)
                     {
-                        <li data-id="@item.Token">
+                        <li onclick="joinInGroup('@item.Token')">
                             @item.GroupName
                             <img src="/images/groups/@item.ImageName" />
                             @if (item.LastChat != null)
@@ -107,92 +107,23 @@
 @section Scripts
 {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/SignalRCustom.js"></script>
     <script>
         var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").build();
         connection.on("ReceiveMessage", Receive);
         connection.on("NewGroup", AppendGroup);
+        connection.on("JoinGroup", joined);
         connection.start();
 
-        function Receive(text) {
-            console.log(text);
+        function joinInGroup(token) {
+            connection.invoke("JoinGroup", token);
         }
 
-        // invoke = فراخوانی کردن
-        function SendMessage(event) {
-            event.preventDefault();
-            const text = document.getElementById("messageText").value;
-            connection.invoke("SendMessage", text);
-        }
-
-        function AppendGroup(groupName, token, imageName) {
-            if (groupName == "Error") {
-                alert("ERROR");
-            } else {
-                $(".rooms #user-groups ul").append(`
-                     <li data-id='${token}'>
-                    ${groupName}
-                    <img src="/images/groups/${imageName}" />
-                    <span></span>
-                </li>
-                    `);
-                $("#exampleModal").modal('toggle');
-                document.getElementById("groupName").value = null;
-            }
-        }
-
-        function insertGroup(event) {
-            event.preventDefault();
-            const groupName = event.target[0].value;
-            const imageFile = event.target[1].files[0];
-            var formData = new FormData();
-            formData.append("GroupName", groupName);
-            formData.append("ImageFile", imageFile);
-            $.ajax({
-                url: "/Home/CreateGroup",
-                type: "post",
-                data: formData,
-                encyType: "multipart/form-data",
-                processData: false,
-                contentType: false
-            });
-        }
-
-        function search() {
-            const text = $("#search_input").val();
-            if (text) {
-                $("#search_result").show();
-                $("#user_groups").hide();
-                $.ajax({
-                    url: "/home/search?title=" + text,
-                    type: "get"
-                }).done(function (data) {
-                    $("#search_result ul").html("");
-                    for (var i in data) {
-                        if (data[i].isUser) {
-                            $("#search_result ul").append(`
-                                         <li data-user-id='${data[i].token}'>
-                                                    ${data[i].title}
-                                                    <img src="/img/${data[i].imageName}" />
-                                                    <span></span>
-                                                </li>
-                                `);
-                        } else {
-                            $("#search_result ul").append(`
-                                         <li data-id='${data[i].token}'>
-                                                    ${data[i].title}
-                                                    <img src="/images/groups/${data[i].imageName}" />
-                                                    <span></span>
-                                                </li>
-
-                                `);
-                        }
-                    }
-
-                });
-            } else {
-                $("#search_result").hide();
-                $("#user_groups").show();
-            }
+        function joined(group, chats) {
+            $(".header").css("display", "block");
+            $(".footer").css("display", "block");
+            $(".header h2").html(group.groupTitle);
+            $(".header img").attr("src", `/images/groups/${group.imageName}`);
         }
     </script>
 }

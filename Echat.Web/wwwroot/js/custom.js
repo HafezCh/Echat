@@ -1,4 +1,4 @@
-$("#register-btn").click(function() {
+﻿$("#register-btn").click(function () {
     $("#login").slideUp();
     $("#register").fadeIn();
 })
