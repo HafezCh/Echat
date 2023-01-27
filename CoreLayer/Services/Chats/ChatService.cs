@@ -20,13 +20,17 @@ namespace CoreLayer.Services.Chats
         public async Task<List<ChatViewModel>> GetGroupChats(long groupId)
         {
             return await Table<Chat>()
+                .Include(x => x.ChatGroup)
+                .Include(x => x.User)
                 .Where(x => x.GroupId == groupId)
                 .Select(x => new ChatViewModel
                 {
-                    Text = x.ChatBody,
+                    ChatBody = x.ChatBody,
                     UserId = x.UserId,
                     GroupId = x.GroupId,
-                    CreationDate = x.CreationDate.ToShortDateString(),
+                    GroupName = x.ChatGroup.GroupTitle,
+                    UserName = x.User.UserName,
+                    CreationDate = $"{x.CreationDate.Hour}:{x.CreationDate.Minute} | {x.CreationDate.ToShortDateString()}",
                 }).AsNoTracking().ToListAsync();
         }
     }

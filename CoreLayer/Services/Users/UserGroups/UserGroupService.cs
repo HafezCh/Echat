@@ -49,4 +49,12 @@ public class UserGroupService : BaseService, IUserGroupService
             .Include(x => x.ChatGroup)
             .AnyAsync(x => x.UserId == userId && x.ChatGroup.GroupToken == groupToken);
     }
+
+    public async Task<List<string>> GetUserIdsByGroupId(long groupId)
+    {
+        return await Table<UserGroup>()
+            .Where(x => x.GroupId == groupId)
+            .Select(x => x.UserId.ToString())
+            .ToListAsync();
+    }
 }

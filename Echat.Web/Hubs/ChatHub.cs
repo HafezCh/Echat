@@ -55,6 +55,10 @@ namespace Echat.Web.Hubs
 
         public async Task SendMessage(string text, long groupId)
         {
+            var group = await _chatGroupService.GetGroupById(groupId);
+
+            if (group == null) return;
+
             var chat = new Chat
             {
                 ChatBody = text,
@@ -66,11 +70,17 @@ namespace Echat.Web.Hubs
 
             var chatModel = new ChatViewModel
             {
-                Text = chat.ChatBody,
+                GroupId = groupId,
+                ChatBody = chat.ChatBody,
                 UserId = chat.UserId,
-                GroupId = chat.GroupId,
-                CreationDate = chat.CreationDate.ToShortDateString()
+                GroupName = group.GroupTitle,
+                UserName = Context.User!.Identity!.Name!,
+                CreationDate = $"{chat.CreationDate.Hour}:{chat.CreationDate.Minute} | {chat.CreationDate.ToShortDateString()}"
             };
+
+            var userIds = await _userGroupService.GetUserIdsByGroupId(groupId);
+
+            await Clients.Users(userIds).SendAsync("ReceiveNotification", chatModel);
 
             await Clients.Group(groupId.ToString()).SendAsync("ReceiveMessage", chatModel);
         }

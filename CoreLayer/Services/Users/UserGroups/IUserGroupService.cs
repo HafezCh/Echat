@@ -8,4 +8,5 @@ public interface IUserGroupService
     Task JoinGroup(long userId, long groupId);
     Task<bool> IsUserInGroup(long userId, long groupId);
     Task<bool> IsUserInGroup(long userId, string groupToken);
+    Task<List<string>> GetUserIdsByGroupId(long groupId);
 }

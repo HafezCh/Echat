@@ -81,21 +81,40 @@
 </div>
 
 @section Scripts
-{
+    {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/SignalRCustom.js"></script>
     <script>
+
+        $(document).ready(function () {
+            if (Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+        });
+
         var currentGroupId = 0;
         var userId = 0;
         var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").build();
         connection.on("Welcome",
-            function(id) {
+            function (id) {
                 userId = id;
             });
         connection.on("ReceiveMessage", Receive);
         connection.on("NewGroup", AppendGroup);
         connection.on("JoinGroup", joined);
+        connection.on("ReceiveNotification", sendNotification);
         connection.start();
+
+        function sendNotification(chat) {
+            if (Notification.permission === "granted") {
+                if (currentGroupId !== chat.groupId) {
+                    var notification = new Notification(chat.groupName,
+                        {
+                            body: chat.chatBody
+                        });
+                }
+            }
+        }
 
         function joinInGroup(token) {
             connection.invoke("JoinGroup", token, currentGroupId);
@@ -112,45 +131,50 @@
                 var chat = chats[i];
                 if (userId == chat.userId) {
                     $(".chats").append(`
-                            <div class="chat-me">
-                                <div class="chat">
-                                    <p>${chat.text}</p>
-                                    <span>${chat.creationDate}</span>
-                                </div>
-                            </div>
-                    `);
-                } else {
-                    $(".chats").append(`
-                                    <div class="chat-you">
+                                    <div class="chat-me">
                                         <div class="chat">
-                                                     <p>${chat.text}</p>
+                                        <span>${chat.userName}</span>
+                                                    <p>${chat.chatBody}</p>
                                             <span>${chat.creationDate}</span>
                                         </div>
                                     </div>
                             `);
+                } else {
+                    $(".chats").append(`
+                                            <div class="chat-you">
+                                                <div class="chat">
+                                                        <span>${chat.userName}</span>
+                                                                     <p>${chat.chatBody}</p>
+                                                    <span>${chat.creationDate}</span>
+                                                </div>
+                                            </div>
+                                    `);
                 }
             }
         }
 
         function Receive(chat) {
+
             if (userId == chat.userId) {
                 $(".chats").append(`
-                            <div class="chat-me">
-                                <div class="chat">
-                                    <p>${chat.text}</p>
-                                    <span>${chat.creationDate}</span>
-                                </div>
-                            </div>
-                    `);
-            } else {
-                $(".chats").append(`
-                                    <div class="chat-you">
+                                    <div class="chat-me">
                                         <div class="chat">
-                                                     <p>${chat.text}</p>
+                                                <span>${chat.userName}</span>
+                                                    <p>${chat.chatBody}</p>
                                             <span>${chat.creationDate}</span>
                                         </div>
                                     </div>
                             `);
+            } else {
+                $(".chats").append(`
+                                            <div class="chat-you">
+                                                <div class="chat">
+                                                        <span>${chat.userName}</span>
+                                                             <p>${chat.chatBody}</p>
+                                                    <span>${chat.creationDate}</span>
+                                                </div>
+                                            </div>
+                                    `);
             }
         }
 
