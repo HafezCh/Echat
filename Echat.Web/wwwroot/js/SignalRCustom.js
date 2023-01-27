@@ -1,15 +1,4 @@
-﻿function Receive(text) {
-    console.log(text);
-}
-
-// invoke = فراخوانی کردن
-function SendMessage(event) {
-    event.preventDefault();
-    const text = document.getElementById("messageText").value;
-    connection.invoke("SendMessage", text);
-}
-
-function AppendGroup(groupName, token, imageName) {
+﻿function AppendGroup(groupName, token, imageName) {
     if (groupName == "Error") {
         alert("ERROR");
     } else {

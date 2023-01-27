@@ -23,36 +23,12 @@
 
 <div class="row">
     <div class="col-8 chat-content">
-        <div class="header"  style="display: none">
+        <div class="header" style="display: none">
             <img src="img/Default.jpg" />
             <h2>علی</h2>
         </div>
-        @*<div class="chats">
-            <div class="chat-me">
-                <div class="chat">
-                    <p>سلام خوبی چه خبر ؟ </p>
-                    <span>2020/06/05</span>
-                </div>
-            </div>
-            <div class="chat-you">
-                <div class="chat">
-                    <p>سلام ممنون یه خبر خیلییی خوبی دارم برات</p>
-                    <span>2020/06/05</span>
-                </div>
-            </div>
-            <div class="chat-me">
-                <div class="chat">
-                    <p>چی ؟!!</p>
-                    <span>2020/06/05</span>
-                </div>
-            </div>
-            <div class="chat-you">
-                <div class="chat">
-                    <p>توی سایت codeYad دوره SignalR رایگان برگزار شده</p>
-                    <span>2020/06/05</span>
-                </div>
-            </div>
-        </div>*@
+        <div class="chats">
+        </div>
         <div class="footer" style="display: none">
             <form onsubmit="SendMessage(event)">
                 <input type="text" id="messageText" class="form-control" placeholder="متن خود را وارد کنید">
@@ -92,7 +68,7 @@
                             @if (item.LastChat != null)
                             {
                                 var time = item.LastChat.CreationDate;
-                                <span>@time.Date @time.Minute : @time.Second</span>
+                                <span>@time.ToShortDateString() @time.ToLongTimeString()</span>
                             }
                         </li>
                     }
@@ -109,14 +85,20 @@
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/SignalRCustom.js"></script>
     <script>
+        var currentGroupId = 0;
+        var userId = 0;
         var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").build();
+        connection.on("Welcome",
+            function(id) {
+                userId = id;
+            });
         connection.on("ReceiveMessage", Receive);
         connection.on("NewGroup", AppendGroup);
         connection.on("JoinGroup", joined);
         connection.start();
 
         function joinInGroup(token) {
-            connection.invoke("JoinGroup", token);
+            connection.invoke("JoinGroup", token, currentGroupId);
         }
 
         function joined(group, chats) {
@@ -124,6 +106,64 @@
             $(".footer").css("display", "block");
             $(".header h2").html(group.groupTitle);
             $(".header img").attr("src", `/images/groups/${group.imageName}`);
+            currentGroupId = group.id;
+            $(".chats").html("");
+            for (i in chats) {
+                var chat = chats[i];
+                if (userId == chat.userId) {
+                    $(".chats").append(`
+                            <div class="chat-me">
+                                <div class="chat">
+                                    <p>${chat.text}</p>
+                                    <span>${chat.creationDate}</span>
+                                </div>
+                            </div>
+                    `);
+                } else {
+                    $(".chats").append(`
+                                    <div class="chat-you">
+                                        <div class="chat">
+                                                     <p>${chat.text}</p>
+                                            <span>${chat.creationDate}</span>
+                                        </div>
+                                    </div>
+                            `);
+                }
+            }
+        }
+
+        function Receive(chat) {
+            if (userId == chat.userId) {
+                $(".chats").append(`
+                            <div class="chat-me">
+                                <div class="chat">
+                                    <p>${chat.text}</p>
+                                    <span>${chat.creationDate}</span>
+                                </div>
+                            </div>
+                    `);
+            } else {
+                $(".chats").append(`
+                                    <div class="chat-you">
+                                        <div class="chat">
+                                                     <p>${chat.text}</p>
+                                            <span>${chat.creationDate}</span>
+                                        </div>
+                                    </div>
+                            `);
+            }
+        }
+
+        // invoke = فراخوانی کردن
+        function SendMessage(event) {
+            event.preventDefault();
+            const textInput = document.getElementById("messageText");
+            if (textInput.value) {
+                connection.invoke("SendMessage", textInput.value, currentGroupId);
+                textInput.value = null;
+            } else {
+                alert("Error");
+            }
         }
     </script>
 }

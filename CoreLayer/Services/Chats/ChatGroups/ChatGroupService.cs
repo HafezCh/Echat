@@ -85,13 +85,12 @@ public class ChatGroupService : BaseService, IChatGroupService
 
     public async Task<ChatGroup?> GetGroupById(long id)
     {
-        return await GetById<ChatGroup>(id, "x=>x.Chats");
+        return await GetById<ChatGroup>(id);
     }
 
     public async Task<ChatGroup?> GetGroupByToken(string token)
     {
         return await Table<ChatGroup>()
-            .Include(x => x.Chats)
             .FirstOrDefaultAsync(x => x.GroupToken == token);
     }
 }

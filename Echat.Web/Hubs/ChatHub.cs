@@ -2,8 +2,9 @@
 using CoreLayer.Services.Chats.ChatGroups;
 using CoreLayer.Services.Users.UserGroups;
 using CoreLayer.Utilities;
+using CoreLayer.ViewModels.Chats;
+using DataLayer.Entities.Chats;
 using Microsoft.AspNetCore.SignalR;
-using System.Security.Claims;
 
 namespace Echat.Web.Hubs
 {
@@ -22,16 +23,11 @@ namespace Echat.Web.Hubs
 
         public override Task OnConnectedAsync()
         {
+            Clients.Caller.SendAsync("Welcome", Context.User.GetUserId());
             return base.OnConnectedAsync();
         }
 
-        public async Task SendMessage(string text)
-        {
-            var userName = Context.User.FindFirstValue(ClaimTypes.Name);
-            await Clients.Others.SendAsync("ReceiveMessage", $"{userName} : {text}");
-        }
-
-        public async Task JoinGroup(string token)
+        public async Task JoinGroup(string token, long currentGroupId)
         {
             var group = await _chatGroupService.GetGroupByToken(token);
 
@@ -47,9 +43,36 @@ namespace Echat.Web.Hubs
                 await Clients.Caller.SendAsync("NewGroup", group.GroupTitle, group.GroupToken, group.ImageName);
             }
 
+            if (currentGroupId > 0)
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentGroupId.ToString());
+
             await Groups.AddToGroupAsync(Context.ConnectionId, group.Id.ToString());
 
-            await Clients.Group(group.Id.ToString()).SendAsync("JoinGroup", group, group.Chats);
+            var chats = await _chatService.GetGroupChats(group.Id);
+
+            await Clients.Group(group.Id.ToString()).SendAsync("JoinGroup", group, chats);
+        }
+
+        public async Task SendMessage(string text, long groupId)
+        {
+            var chat = new Chat
+            {
+                ChatBody = text,
+                GroupId = groupId,
+                UserId = Context.User.GetUserId()
+            };
+
+            await _chatService.SendMessage(chat);
+
+            var chatModel = new ChatViewModel
+            {
+                Text = chat.ChatBody,
+                UserId = chat.UserId,
+                GroupId = chat.GroupId,
+                CreationDate = chat.CreationDate.ToShortDateString()
+            };
+
+            await Clients.Group(groupId.ToString()).SendAsync("ReceiveMessage", chatModel);
         }
     }
 }
