@@ -1,4 +1,89 @@
-﻿function AppendGroup(groupName, token, imageName) {
+﻿function sendNotification(chat) {
+    if (Notification.permission === "granted") {
+        if (currentGroupId !== chat.groupId) {
+            var notification = new Notification(chat.groupName,
+                {
+                    body: chat.chatBody
+                });
+        }
+    }
+}
+
+function joinInGroup(token) {
+    connection.invoke("JoinGroup", token, currentGroupId);
+}
+
+function joined(group, chats) {
+    $(".header").css("display", "block");
+    $(".footer").css("display", "block");
+    $(".header h2").html(group.groupTitle);
+    $(".header img").attr("src", `/images/groups/${group.imageName}`);
+    currentGroupId = group.id;
+    $(".chats").html("");
+    for (i in chats) {
+        var chat = chats[i];
+        if (userId == chat.userId) {
+            $(".chats").append(`
+                                    <div class="chat-me">
+                                        <div class="chat">
+                                        <span>${chat.userName}</span>
+                                                    <p>${chat.chatBody}</p>
+                                            <span>${chat.creationDate}</span>
+                                        </div>
+                                    </div>
+                            `);
+        } else {
+            $(".chats").append(`
+                                            <div class="chat-you">
+                                                <div class="chat">
+                                                        <span>${chat.userName}</span>
+                                                                     <p>${chat.chatBody}</p>
+                                                    <span>${chat.creationDate}</span>
+                                                </div>
+                                            </div>
+                                    `);
+        }
+    }
+}
+
+function Receive(chat) {
+
+    if (userId == chat.userId) {
+        $(".chats").append(`
+                                    <div class="chat-me">
+                                        <div class="chat">
+                                                <span>${chat.userName}</span>
+                                                    <p>${chat.chatBody}</p>
+                                            <span>${chat.creationDate}</span>
+                                        </div>
+                                    </div>
+                            `);
+    } else {
+        $(".chats").append(`
+                                            <div class="chat-you">
+                                                <div class="chat">
+                                                        <span>${chat.userName}</span>
+                                                             <p>${chat.chatBody}</p>
+                                                    <span>${chat.creationDate}</span>
+                                                </div>
+                                            </div>
+                                    `);
+    }
+}
+
+// invoke = فراخوانی کردن
+function SendMessage(event) {
+    event.preventDefault();
+    const textInput = document.getElementById("messageText");
+    if (textInput.value) {
+        connection.invoke("SendMessage", textInput.value, currentGroupId);
+        textInput.value = null;
+    } else {
+        alert("Error");
+    }
+}
+
+function AppendGroup(groupName, token, imageName) {
     if (groupName == "Error") {
         alert("ERROR");
     } else {

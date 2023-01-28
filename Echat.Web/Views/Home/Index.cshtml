@@ -3,6 +3,13 @@
     ViewData["Title"] = "Home Page";
 }
 
+<div class="disConnect">
+    <div>
+        <p>اتصال شما به سرور قطع شده</p>
+        <p>درحال برقراری ارتباط ...</p>
+    </div>
+</div>
+
 <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <form class="modal-content" enctype="multipart/form-data" onsubmit="insertGroup(event)">
@@ -103,91 +110,19 @@
         connection.on("NewGroup", AppendGroup);
         connection.on("JoinGroup", joined);
         connection.on("ReceiveNotification", sendNotification);
-        connection.start();
 
-        function sendNotification(chat) {
-            if (Notification.permission === "granted") {
-                if (currentGroupId !== chat.groupId) {
-                    var notification = new Notification(chat.groupName,
-                        {
-                            body: chat.chatBody
-                        });
-                }
+        async function Start() {
+            try {
+                await connection.start();
+                $(".disConnect").hide();
+            } catch (e) {
+                $(".disConnect").show();
+                setTimeout(Start,6000);
             }
         }
 
-        function joinInGroup(token) {
-            connection.invoke("JoinGroup", token, currentGroupId);
-        }
+        connection.onclose(Start);
+        Start();
 
-        function joined(group, chats) {
-            $(".header").css("display", "block");
-            $(".footer").css("display", "block");
-            $(".header h2").html(group.groupTitle);
-            $(".header img").attr("src", `/images/groups/${group.imageName}`);
-            currentGroupId = group.id;
-            $(".chats").html("");
-            for (i in chats) {
-                var chat = chats[i];
-                if (userId == chat.userId) {
-                    $(".chats").append(`
-                                    <div class="chat-me">
-                                        <div class="chat">
-                                        <span>${chat.userName}</span>
-                                                    <p>${chat.chatBody}</p>
-                                            <span>${chat.creationDate}</span>
-                                        </div>
-                                    </div>
-                            `);
-                } else {
-                    $(".chats").append(`
-                                            <div class="chat-you">
-                                                <div class="chat">
-                                                        <span>${chat.userName}</span>
-                                                                     <p>${chat.chatBody}</p>
-                                                    <span>${chat.creationDate}</span>
-                                                </div>
-                                            </div>
-                                    `);
-                }
-            }
-        }
-
-        function Receive(chat) {
-
-            if (userId == chat.userId) {
-                $(".chats").append(`
-                                    <div class="chat-me">
-                                        <div class="chat">
-                                                <span>${chat.userName}</span>
-                                                    <p>${chat.chatBody}</p>
-                                            <span>${chat.creationDate}</span>
-                                        </div>
-                                    </div>
-                            `);
-            } else {
-                $(".chats").append(`
-                                            <div class="chat-you">
-                                                <div class="chat">
-                                                        <span>${chat.userName}</span>
-                                                             <p>${chat.chatBody}</p>
-                                                    <span>${chat.creationDate}</span>
-                                                </div>
-                                            </div>
-                                    `);
-            }
-        }
-
-        // invoke = فراخوانی کردن
-        function SendMessage(event) {
-            event.preventDefault();
-            const textInput = document.getElementById("messageText");
-            if (textInput.value) {
-                connection.invoke("SendMessage", textInput.value, currentGroupId);
-                textInput.value = null;
-            } else {
-                alert("Error");
-            }
-        }
     </script>
 }
