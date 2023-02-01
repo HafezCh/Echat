@@ -34,6 +34,12 @@ public class EChatApplicationContext : DbContext
             .HasForeignKey(b => b.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<ChatGroup>()
+            .HasOne(b => b.Receiver)
+            .WithMany(b => b.PrivateGroups)
+            .HasForeignKey(b => b.ReceiverId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         base.OnModelCreating(modelBuilder);
     }
 

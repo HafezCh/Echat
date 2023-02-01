@@ -33,14 +33,16 @@ namespace Echat.Web.Hubs
 
             if (group == null)
             {
-                await Clients.Caller.SendAsync("Error", "GroupNotFound");
+                await Clients.Caller.SendAsync("Error", "Group Not Found");
                 return;
             }
+
+            var groupDto = FixGroupModel(group);
 
             if (!await _userGroupService.IsUserInGroup(Context.User.GetUserId(), token))
             {
                 await _userGroupService.JoinGroup(Context.User.GetUserId(), group.Id);
-                await Clients.Caller.SendAsync("NewGroup", group.GroupTitle, group.GroupToken, group.ImageName);
+                await Clients.Caller.SendAsync("NewGroup", groupDto.GroupTitle, groupDto.GroupToken, groupDto.ImageName);
             }
 
             if (currentGroupId > 0)
@@ -50,7 +52,7 @@ namespace Echat.Web.Hubs
 
             var chats = await _chatService.GetGroupChats(group.Id);
 
-            await Clients.Group(group.Id.ToString()).SendAsync("JoinGroup", group, chats);
+            await Clients.Group(group.Id.ToString()).SendAsync("JoinGroup", groupDto, chats);
         }
 
         public async Task SendMessage(string text, long groupId)
@@ -84,5 +86,75 @@ namespace Echat.Web.Hubs
 
             await Clients.Group(groupId.ToString()).SendAsync("ReceiveMessage", chatModel);
         }
+
+        public async Task JoinPrivateGroup(long receiverId, long currentGroupId)
+        {
+            if (currentGroupId > 0)
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentGroupId.ToString());
+
+            var group = await _chatGroupService.InsertPrivateGroup(Context.User.GetUserId(), receiverId);
+            var groupDto = FixGroupModel(group);
+
+            if (!await _userGroupService.IsUserInGroup(Context.User.GetUserId(), group.GroupToken))
+            {
+                await _userGroupService.JoinGroup(new List<long> { group.ReceiverId ?? 0, group.OwnerId }, group.Id);
+                await Clients.Caller.SendAsync("NewGroup", groupDto.GroupTitle, groupDto.GroupToken, groupDto.ImageName);
+                await Clients.User(groupDto.ReceiverId.ToString()!).SendAsync("NewGroup", Context.User.Identity.Name, groupDto.GroupToken, groupDto.ImageName);
+            }
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, group.Id.ToString());
+
+            var chats = await _chatService.GetGroupChats(group.Id);
+
+            await Clients.Group(group.Id.ToString()).SendAsync("JoinGroup", groupDto, chats);
+        }
+
+        #region Utils
+
+        private ChatGroup FixGroupModel(ChatGroup chatGroup)
+        {
+            if (!chatGroup.IsPrivate)
+                return new ChatGroup
+                {
+                    Id = chatGroup.Id,
+                    GroupToken = chatGroup.GroupToken,
+                    CreationDate = chatGroup.CreationDate,
+                    GroupTitle = chatGroup.GroupTitle,
+                    ImageName = chatGroup.ImageName,
+                    IsPrivate = false,
+                    OwnerId = chatGroup.OwnerId,
+                    ReceiverId = chatGroup.ReceiverId
+                };
+
+            if (chatGroup.OwnerId == Context.User.GetUserId())
+            {
+                return new ChatGroup
+                {
+                    Id = chatGroup.Id,
+                    GroupToken = chatGroup.GroupToken,
+                    CreationDate = chatGroup.CreationDate,
+                    GroupTitle = chatGroup.Receiver.UserName,
+                    ImageName = chatGroup.Receiver.AvatarName,
+                    IsPrivate = false,
+                    OwnerId = chatGroup.OwnerId,
+                    ReceiverId = chatGroup.ReceiverId
+                };
+            }
+
+            return new ChatGroup
+            {
+                Id = chatGroup.Id,
+                GroupToken = chatGroup.GroupToken,
+                CreationDate = chatGroup.CreationDate,
+                GroupTitle = chatGroup.User.UserName,
+                ImageName = chatGroup.User.AvatarName,
+                IsPrivate = false,
+                OwnerId = chatGroup.OwnerId,
+                ReceiverId = chatGroup.ReceiverId
+            };
+
+        }
+
+        #endregion
     }
 }

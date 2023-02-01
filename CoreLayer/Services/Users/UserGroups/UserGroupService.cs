@@ -14,18 +14,49 @@ public class UserGroupService : BaseService, IUserGroupService
     public async Task<List<UserGroupViewModel>> GetUserGroups(long userId)
     {
         var result = await Table<UserGroup>()
-            .Include(x => x.ChatGroup)
-            .ThenInclude(x => x.Chats)
+            .Include(x => x.ChatGroup.Chats)
+            .Include(x => x.ChatGroup.Receiver)
+            .Include(x => x.ChatGroup.User)
             .Where(x => x.UserId == userId)
-            .Select(x => new UserGroupViewModel
-            {
-                Token = x.ChatGroup.GroupToken,
-                ImageName = x.ChatGroup.ImageName,
-                GroupName = x.ChatGroup.GroupTitle,
-                LastChat = x.ChatGroup.Chats.OrderBy(c => c.CreationDate).LastOrDefault()
-            }).AsNoTracking().ToListAsync();
+            .AsNoTracking().ToListAsync();
 
-        return result;
+        var model = new List<UserGroupViewModel>();
+
+        result.ForEach(userGroup =>
+        {
+            var chatGroup = userGroup.ChatGroup;
+            if (chatGroup.ReceiverId != null)
+            {
+                if (chatGroup.ReceiverId == userId)
+                    model.Add(new UserGroupViewModel
+                    {
+                        ImageName = chatGroup.User.AvatarName,
+                        GroupName = chatGroup.User.UserName,
+                        Token = chatGroup.GroupToken,
+                        LastChat = chatGroup.Chats.OrderByDescending(x => x.CreationDate).FirstOrDefault()
+                    });
+                else
+                    model.Add(new UserGroupViewModel
+                    {
+                        ImageName = chatGroup.Receiver.AvatarName,
+                        GroupName = chatGroup.Receiver.UserName,
+                        Token = chatGroup.GroupToken,
+                        LastChat = chatGroup.Chats.OrderByDescending(x => x.CreationDate).FirstOrDefault()
+                    });
+            }
+            else
+            {
+                model.Add(new UserGroupViewModel
+                {
+                    ImageName = chatGroup.ImageName,
+                    GroupName = chatGroup.GroupTitle,
+                    Token = chatGroup.GroupToken,
+                    LastChat = chatGroup.Chats.OrderByDescending(x => x.CreationDate).FirstOrDefault()
+                });
+            }
+        });
+
+        return model;
     }
 
     public async Task JoinGroup(long userId, long groupId)
@@ -34,6 +65,19 @@ public class UserGroupService : BaseService, IUserGroupService
         {
             UserId = userId,
             GroupId = groupId
+        });
+        await Save();
+    }
+
+    public async Task JoinGroup(List<long> userIds, long groupId)
+    {
+        userIds.ForEach(userId =>
+        {
+            Insert(new UserGroup
+            {
+                UserId = userId,
+                GroupId = groupId
+            });
         });
         await Save();
     }

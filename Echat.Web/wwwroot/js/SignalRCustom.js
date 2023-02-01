@@ -1,4 +1,35 @@
-﻿function sendNotification(chat) {
+﻿$(document).ready(function () {
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+});
+
+var currentGroupId = 0;
+var userId = 0;
+var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").build();
+connection.on("Welcome",
+    function (id) {
+        userId = id;
+    });
+connection.on("ReceiveMessage", Receive);
+connection.on("NewGroup", AppendGroup);
+connection.on("JoinGroup", joined);
+connection.on("ReceiveNotification", sendNotification);
+
+async function Start() {
+    try {
+        await connection.start();
+        $(".disConnect").hide();
+    } catch (e) {
+        $(".disConnect").show();
+        setTimeout(Start, 6000);
+    }
+}
+
+connection.onclose(Start);
+Start();
+
+function sendNotification(chat) {
     if (Notification.permission === "granted") {
         if (currentGroupId !== chat.groupId) {
             var notification = new Notification(chat.groupName,
@@ -9,10 +40,6 @@
     }
 }
 
-function joinInGroup(token) {
-    connection.invoke("JoinGroup", token, currentGroupId);
-}
-
 function joined(group, chats) {
     $(".header").css("display", "block");
     $(".footer").css("display", "block");
@@ -20,7 +47,7 @@ function joined(group, chats) {
     $(".header img").attr("src", `/images/groups/${group.imageName}`);
     currentGroupId = group.id;
     $(".chats").html("");
-    for (i in chats) {
+    for (var i in chats) {
         var chat = chats[i];
         if (userId == chat.userId) {
             $(".chats").append(`
@@ -47,8 +74,7 @@ function joined(group, chats) {
 }
 
 function Receive(chat) {
-
-    if (userId == chat.userId) {
+    if (userId === chat.userId) {
         $(".chats").append(`
                                     <div class="chat-me">
                                         <div class="chat">
@@ -87,7 +113,7 @@ function AppendGroup(groupName, token, imageName) {
     if (groupName == "Error") {
         alert("ERROR");
     } else {
-        $(".rooms #user-groups ul").append(`
+        $(".rooms #user_groups ul").append(`
                      <li onclick="joinInGroup('${token}')">
                     ${groupName}
                     <img src="/images/groups/${imageName}" />
@@ -129,7 +155,7 @@ function search() {
             for (var i in data) {
                 if (data[i].isUser) {
                     $("#search_result ul").append(`
-                                         <li data-user-id='${data[i].token}'>
+                                         <li onclick="joinInPrivateGroup(${data[i].token})">
                                                     ${data[i].title}
                                                     <img src="/img/${data[i].imageName}" />
                                                     <span></span>
@@ -152,4 +178,12 @@ function search() {
         $("#search_result").hide();
         $("#user_groups").show();
     }
+}
+
+function joinInGroup(token) {
+    connection.invoke("JoinGroup", token, currentGroupId);
+}
+
+function joinInPrivateGroup(receiverId) {
+    connection.invoke("JoinPrivateGroup", receiverId, currentGroupId);
 }

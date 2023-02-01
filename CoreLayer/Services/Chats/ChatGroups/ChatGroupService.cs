@@ -50,7 +50,7 @@ public class ChatGroupService : BaseService, IChatGroupService
         return chatGroup;
     }
 
-    public async Task<List<SearchResultViewModel>> Search(string title)
+    public async Task<List<SearchResultViewModel>> Search(string title, long userId)
     {
         var result = new List<SearchResultViewModel>();
 
@@ -58,7 +58,7 @@ public class ChatGroupService : BaseService, IChatGroupService
             return result;
 
         var groups = await Table<ChatGroup>()
-            .Where(x => x.GroupTitle.Contains(title))
+            .Where(x => x.GroupTitle.Contains(title) && !x.IsPrivate)
             .Select(x => new SearchResultViewModel
             {
                 ImageName = x.ImageName,
@@ -68,7 +68,7 @@ public class ChatGroupService : BaseService, IChatGroupService
             }).ToListAsync();
 
         var users = await Table<User>()
-            .Where(x => x.UserName.Contains(title))
+            .Where(x => x.UserName.Contains(title) && x.Id != userId)
             .Select(x => new SearchResultViewModel
             {
                 ImageName = x.AvatarName,
@@ -85,12 +85,42 @@ public class ChatGroupService : BaseService, IChatGroupService
 
     public async Task<ChatGroup?> GetGroupById(long id)
     {
-        return await GetById<ChatGroup>(id);
+        return await Table<ChatGroup>()
+            .Include(x => x.User)
+            .Include(x => x.Receiver)
+            .FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public async Task<ChatGroup?> GetGroupByToken(string token)
     {
         return await Table<ChatGroup>()
+            .Include(x => x.User)
+            .Include(x => x.Receiver)
             .FirstOrDefaultAsync(x => x.GroupToken == token);
+    }
+
+    public async Task<ChatGroup> InsertPrivateGroup(long userId, long receiverId)
+    {
+        var group = await Table<ChatGroup>()
+            .Include(x => x.User)
+            .Include(x => x.Receiver)
+            .SingleOrDefaultAsync(x => (x.OwnerId == userId && x.ReceiverId == receiverId)
+                                       || (x.OwnerId == receiverId && x.ReceiverId == userId));
+
+        if (group != null) return group;
+
+        var groupCreated = new ChatGroup
+        {
+            GroupTitle = $"Chat With {receiverId}",
+            GroupToken = Guid.NewGuid().ToString(),
+            ImageName = "Default.jpg",
+            IsPrivate = true,
+            OwnerId = userId,
+            ReceiverId = receiverId
+        };
+
+        Insert(groupCreated);
+        await Save();
+        return (await GetGroupById(groupCreated.Id))!;
     }
 }

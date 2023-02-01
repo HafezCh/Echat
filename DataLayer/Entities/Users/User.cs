@@ -1,5 +1,6 @@
 ﻿using DataLayer.Entities.Chats;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DataLayer.Entities.Users;
 
@@ -17,7 +18,10 @@ public class User : BaseEntity
 
     #region Relations
 
+    [InverseProperty("User")]
     public ICollection<ChatGroup> ChatGroups { get; set; }
+    [InverseProperty("Receiver")]
+    public ICollection<ChatGroup> PrivateGroups { get; set; }
     public ICollection<Chat> Chats { get; set; }
     public ICollection<UserRole> UserRoles { get; set; }
     public ICollection<UserGroup> UserGroups { get; set; }

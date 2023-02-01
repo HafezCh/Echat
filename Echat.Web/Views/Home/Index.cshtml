@@ -32,7 +32,7 @@
     <div class="col-8 chat-content">
         <div class="header" style="display: none">
             <img src="img/Default.jpg" />
-            <h2>علی</h2>
+            <h2></h2>
         </div>
         <div class="chats">
         </div>
@@ -91,38 +91,4 @@
     {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/SignalRCustom.js"></script>
-    <script>
-
-        $(document).ready(function () {
-            if (Notification.permission !== "granted") {
-                Notification.requestPermission();
-            }
-        });
-
-        var currentGroupId = 0;
-        var userId = 0;
-        var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").build();
-        connection.on("Welcome",
-            function (id) {
-                userId = id;
-            });
-        connection.on("ReceiveMessage", Receive);
-        connection.on("NewGroup", AppendGroup);
-        connection.on("JoinGroup", joined);
-        connection.on("ReceiveNotification", sendNotification);
-
-        async function Start() {
-            try {
-                await connection.start();
-                $(".disConnect").hide();
-            } catch (e) {
-                $(".disConnect").show();
-                setTimeout(Start,6000);
-            }
-        }
-
-        connection.onclose(Start);
-        Start();
-
-    </script>
 }

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Echat.Web.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly IHubContext<ChatHub> _hubContext;
@@ -22,7 +23,6 @@ namespace Echat.Web.Controllers
             _userGroupService = userGroupService;
         }
 
-        [Authorize]
         public async Task<IActionResult> Index()
         {
             var model = await _userGroupService.GetUserGroups(User.GetUserId());
@@ -30,7 +30,6 @@ namespace Echat.Web.Controllers
             return View(model);
         }
 
-        [Authorize]
         [HttpPost]
         public async Task CreateGroup([FromForm] CreateGroupViewModel? model)
         {
@@ -54,7 +53,7 @@ namespace Echat.Web.Controllers
 
         public async Task<IActionResult> Search(string title)
         {
-            return new ObjectResult(await _chatGroupService.Search(title));
+            return new ObjectResult(await _chatGroupService.Search(title, User.GetUserId()));
         }
     }
 }
